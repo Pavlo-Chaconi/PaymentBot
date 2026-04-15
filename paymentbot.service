@@ -1,0 +1,16 @@
+[Unit]
+Description=Telegram Payment Bot
+After=network.target
+
+[Service]
+# Укажите вашего пользователя системы, например root или имя вашего юзера (ubuntu, debian и т.д.)
+User=root
+# Путь до папки, куда вы скопируете (склонируете) проект на сервере
+WorkingDirectory=/opt/PaymentBot
+# Путь до виртуального окружения python и путь до запускаемого скрипта
+ExecStart=/opt/PaymentBot/venv/bin/python /opt/PaymentBot/bot.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
