@@ -82,18 +82,21 @@ async def cmd_check(message: types.Message):
             await message.reply(f"Ошибка форматирования: {e}")
 
 async def main():
-    if PROXY_URL and PROXY_URL.startswith("socks"):
+    proxy = PROXY_URL or "socks5://127.0.0.1:1080"
+    logging.info(f"Инициализация бота... Используем прокси: {proxy}")
+    
+    if proxy.startswith("socks"):
         # Если прокси SOCKS5 (xray)
         from aiohttp_socks import ProxyConnector
-        connector = ProxyConnector.from_url(PROXY_URL, family=socket.AF_INET)
+        connector = ProxyConnector.from_url(proxy, family=socket.AF_INET)
         client_session = aiohttp.ClientSession(connector=connector)
         session = AiohttpSession()
         session._session = client_session
-    elif PROXY_URL:
+    elif proxy:
         # Если прокси обычный HTTP
         connector = aiohttp.TCPConnector(family=socket.AF_INET)
         client_session = aiohttp.ClientSession(connector=connector)
-        session = AiohttpSession(proxy=PROXY_URL)
+        session = AiohttpSession(proxy=proxy)
         session._session = client_session
     else:
         # Без прокси, но с IPv4
