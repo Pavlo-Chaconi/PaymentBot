@@ -14,15 +14,9 @@ from aiogram.client.session.aiohttp import AiohttpSession
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN не задан. Пожалуйста, создайте файл .env по примеру .env.example")
 
-# Принудительно используем IPv4, так как на Debian часто aiohttp зависает,
-# пытаясь подключиться к Telegram по неработающему IPv6.
-connector = aiohttp.TCPConnector(family=socket.AF_INET)
-session = AiohttpSession(connector=connector)
-
-bot = Bot(token=BOT_TOKEN, session=session)
 dp = Dispatcher()
 
-async def periodic_mail_check():
+async def periodic_mail_check(bot: Bot):
     """
     Фоновый процесс проверки почты.
     """
@@ -88,9 +82,14 @@ async def cmd_check(message: types.Message):
             await message.reply(f"Ошибка форматирования: {e}")
 
 async def main():
+    # Инициализируем бота и сессию ТОЛЬКО внутри запущенного event loop
+    connector = aiohttp.TCPConnector(family=socket.AF_INET)
+    session = AiohttpSession(connector=connector)
+    bot = Bot(token=BOT_TOKEN, session=session)
+
     # Запускаем фоновую задачу проверки почты
     if ALLOWED_USER_ID:
-        asyncio.create_task(periodic_mail_check())
+        asyncio.create_task(periodic_mail_check(bot))
     else:
         logging.warning("ALLOWED_USER_ID не задан. Фоновая рассылка не запустится.")
 
