@@ -2,7 +2,7 @@ import asyncio
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from config import BOT_TOKEN, ALLOWED_USER_ID
+from config import BOT_TOKEN, ALLOWED_USER_ID, PROXY_URL
 from mail_client import check_mail_async
 
 logging.basicConfig(level=logging.INFO)
@@ -82,14 +82,26 @@ async def cmd_check(message: types.Message):
             await message.reply(f"Ошибка форматирования: {e}")
 
 async def main():
-    # Создаем aiohttp сессию с принудительным IPv4 коннектором
-    connector = aiohttp.TCPConnector(family=socket.AF_INET)
-    client_session = aiohttp.ClientSession(connector=connector)
-    
-    # Инициализируем сессию aiogram и подменяем ее внутренний клиент на наш
-    session = AiohttpSession()
-    session._session = client_session
-    
+    if PROXY_URL and PROXY_URL.startswith("socks"):
+        # Если прокси SOCKS5 (xray)
+        from aiohttp_socks import ProxyConnector
+        connector = ProxyConnector.from_url(PROXY_URL, family=socket.AF_INET)
+        client_session = aiohttp.ClientSession(connector=connector)
+        session = AiohttpSession()
+        session._session = client_session
+    elif PROXY_URL:
+        # Если прокси обычный HTTP
+        connector = aiohttp.TCPConnector(family=socket.AF_INET)
+        client_session = aiohttp.ClientSession(connector=connector)
+        session = AiohttpSession(proxy=PROXY_URL)
+        session._session = client_session
+    else:
+        # Без прокси, но с IPv4
+        connector = aiohttp.TCPConnector(family=socket.AF_INET)
+        client_session = aiohttp.ClientSession(connector=connector)
+        session = AiohttpSession()
+        session._session = client_session
+        
     bot = Bot(token=BOT_TOKEN, session=session)
 
     # Запускаем фоновую задачу проверки почты
