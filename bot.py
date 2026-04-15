@@ -82,9 +82,14 @@ async def cmd_check(message: types.Message):
             await message.reply(f"Ошибка форматирования: {e}")
 
 async def main():
-    # Инициализируем бота и сессию ТОЛЬКО внутри запущенного event loop
+    # Создаем aiohttp сессию с принудительным IPv4 коннектором
     connector = aiohttp.TCPConnector(family=socket.AF_INET)
-    session = AiohttpSession(connector=connector)
+    client_session = aiohttp.ClientSession(connector=connector)
+    
+    # Инициализируем сессию aiogram и подменяем ее внутренний клиент на наш
+    session = AiohttpSession()
+    session._session = client_session
+    
     bot = Bot(token=BOT_TOKEN, session=session)
 
     # Запускаем фоновую задачу проверки почты
