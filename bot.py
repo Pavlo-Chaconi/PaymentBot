@@ -86,9 +86,10 @@ async def main():
     logging.info(f"Инициализация бота... Используем прокси: {proxy}")
     
     if proxy.startswith("socks"):
-        # Если прокси SOCKS5 (xray)
+        # Если прокси SOCKS5 (xray). Добавляем rdns=True (аналог socks5h в curl), 
+        # чтобы DNS расшифровывался на стороне Xray, а не на заблокированном сервере!
         from aiohttp_socks import ProxyConnector
-        connector = ProxyConnector.from_url(proxy, family=socket.AF_INET)
+        connector = ProxyConnector.from_url(proxy, family=socket.AF_INET, rdns=True)
         client_session = aiohttp.ClientSession(connector=connector)
         session = AiohttpSession()
         session._session = client_session
